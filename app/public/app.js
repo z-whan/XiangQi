@@ -35,6 +35,7 @@ const state = {
   humanSide: null,
   locked: false,
   boardFlipped: false,
+  showHint: false,
   selected: null,
   legalTips: [],
   lastMove: null,
@@ -399,6 +400,53 @@ function boardMarkingsMarkup() {
   `;
 }
 
+function visualPoint(row, col) {
+  const visualRow = state.boardFlipped ? 9 - row : row;
+  const visualCol = state.boardFlipped ? 8 - col : col;
+  return {
+    row: visualRow,
+    col: visualCol,
+    x: visualCol + 0.5,
+    y: visualRow < 5 ? visualRow + 0.5 : visualRow + 1.15
+  };
+}
+
+function currentHintMove() {
+  if (!state.showHint || !state.currentResult?.bestMove || state.currentResult.bestMove.length < 4) return null;
+  const move = uciToMove(state.currentResult.bestMove);
+  const piece = state.board[move.from.row]?.[move.from.col];
+  if (!piece || piece === " ") return null;
+  return move;
+}
+
+function renderHintArrow() {
+  const move = currentHintMove();
+  if (!move) return;
+  const from = visualPoint(move.from.row, move.from.col);
+  const to = visualPoint(move.to.row, move.to.col);
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const start = { x: from.x + ux * 0.34, y: from.y + uy * 0.34 };
+  const end = { x: to.x - ux * 0.38, y: to.y - uy * 0.38 };
+  const arrow = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  arrow.setAttribute("class", "hint-arrow-overlay");
+  arrow.setAttribute("viewBox", "0 0 9 10.65");
+  arrow.setAttribute("preserveAspectRatio", "none");
+  arrow.innerHTML = `
+    <defs>
+      <marker id="hintArrowHead" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" class="hint-arrow-head"></path>
+      </marker>
+    </defs>
+    <line class="hint-arrow-line" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" marker-end="url(#hintArrowHead)"></line>
+    <circle class="hint-arrow-start" cx="${from.x}" cy="${from.y}" r="0.13"></circle>
+  `;
+  boardEl.append(arrow);
+}
+
 function render() {
   renderBoard();
   $("#modeBadge").textContent = modeText(state.mode);
@@ -430,6 +478,8 @@ function renderButtons() {
   $("#setupBtn").classList.toggle("btn-primary", isSetup);
   $("#flipBoardBtn").textContent = state.boardFlipped ? "恢复方向" : "反转棋盘";
   $("#flipBoardBtn").classList.toggle("btn-primary", state.boardFlipped);
+  $("#hintBtn").textContent = state.showHint ? "关闭提示" : "开启提示";
+  $("#hintBtn").classList.toggle("btn-primary", state.showHint);
   $("#finishBtn").disabled = state.mode === Mode.GAME_OVER || isSetup;
   $("#turnBtn").disabled = state.locked || state.mode === Mode.AI_ASSIST || state.mode === Mode.AUTO_PLAY || state.mode === Mode.GAME_OVER;
 }
@@ -489,6 +539,7 @@ function renderBoard() {
       boardEl.append(square);
     }
   }
+  renderHintArrow();
 }
 
 function pointEq(a, b) {
@@ -531,6 +582,15 @@ function toggleBoardFlip() {
   state.selected = null;
   state.legalTips = [];
   render();
+}
+
+async function toggleHint() {
+  state.showHint = !state.showHint;
+  render();
+  if (state.showHint && !currentHintMove()) {
+    await runShortAnalysis();
+    if (!currentHintMove()) notify("当前还没有可显示的推荐走法。请确认引擎可用，并等待一次局面分析完成。", "warn", true);
+  }
 }
 
 function handleSquareClick(row, col) {
@@ -1149,7 +1209,14 @@ async function saveSettings() {
 }
 
 function updateSettingsControls() {
-  const customEnabled = $("#presetSelect").value === "custom";
+  const presetValue = $("#presetSelect").value;
+  const customEnabled = presetValue === "custom";
+  if (!customEnabled) {
+    const preset = presetMap[presetValue] || presetMap["3"];
+    $("#searchModeSelect").value = preset.mode || "movetime";
+    $("#depthInput").value = preset.depth;
+    $("#movetimeInput").value = preset.movetime;
+  }
   const customFields = $("#customSearchFields");
   customFields.classList.toggle("is-disabled-setting", !customEnabled);
   for (const input of customFields.querySelectorAll("input, select")) {
@@ -1359,6 +1426,7 @@ function wireEvents() {
   $("#resetBtn").addEventListener("click", resetGame);
   $("#setupBtn").addEventListener("click", toggleCustomSetup);
   $("#flipBoardBtn").addEventListener("click", toggleBoardFlip);
+  $("#hintBtn").addEventListener("click", () => toggleHint());
   $("#finishBtn").addEventListener("click", () => endGame("用户手动结束对局。"));
   $("#exportLogBtn").addEventListener("click", () => exportText("xiangqi-log.json", JSON.stringify(state.logEntries, null, 2)));
   $("#exportMovesBtn").addEventListener("click", () => autoExportGame("用户手动导出棋谱").catch(err => notify(err.message, "error", true)));

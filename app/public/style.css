@@ -204,7 +204,7 @@ h3 { font-size: 16px; margin: 18px 0 10px; }
   grid-template-rows: repeat(5, 1fr) 0.65fr repeat(5, 1fr);
   position: relative;
   background: var(--paper);
-  border: 4px solid #76512c;
+  border: 5px solid #76512c;
   box-shadow: 0 8px 24px rgba(73, 49, 24, 0.18);
   overflow: hidden;
 }
@@ -214,9 +214,9 @@ h3 { font-size: 16px; margin: 18px 0 10px; }
   z-index: 3;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(118, 81, 44, 0.045);
+  border: 1px solid rgba(118, 81, 44, 0.018);
   border-radius: 0;
-  background: rgba(255, 250, 240, 0.035);
+  background: rgba(255, 250, 240, 0.018);
   min-width: 0;
   min-height: 0;
   padding: 0;
@@ -228,10 +228,10 @@ h3 { font-size: 16px; margin: 18px 0 10px; }
 }
 
 .square.edge-right {
-  border-right-color: rgba(118, 81, 44, 0.045);
+  border-right-color: rgba(118, 81, 44, 0.018);
 }
 .square.edge-bottom {
-  border-bottom-color: rgba(118, 81, 44, 0.045);
+  border-bottom-color: rgba(118, 81, 44, 0.018);
 }
 
 .river-label {
@@ -244,8 +244,8 @@ h3 { font-size: 16px; margin: 18px 0 10px; }
   align-items: center;
   pointer-events: none;
   background: linear-gradient(90deg, rgba(255, 250, 240, 0.88), rgba(244, 225, 190, 0.86), rgba(255, 250, 240, 0.88));
-  border-top: 2px solid rgba(118, 81, 44, 0.68);
-  border-bottom: 2px solid rgba(118, 81, 44, 0.68);
+  border-top: 3px solid rgba(118, 81, 44, 0.75);
+  border-bottom: 3px solid rgba(118, 81, 44, 0.75);
 }
 
 .river-label span {
@@ -265,22 +265,48 @@ h3 { font-size: 16px; margin: 18px 0 10px; }
 
 .board-line {
   stroke: rgba(82, 48, 22, 0.95);
-  stroke-width: 0.065;
+  stroke-width: 0.105;
   vector-effect: non-scaling-stroke;
 }
 
 .board-border-line {
-  stroke-width: 0.095;
+  stroke-width: 0.15;
 }
 
 .palace-line {
   stroke: rgba(82, 48, 22, 0.98);
-  stroke-width: 0.075;
+  stroke-width: 0.12;
   vector-effect: non-scaling-stroke;
 }
 
 .palace-bold {
-  stroke-width: 0.13;
+  stroke-width: 0.2;
+}
+
+.hint-arrow-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.hint-arrow-line {
+  stroke: rgba(29, 100, 167, 0.92);
+  stroke-width: 0.12;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.24));
+}
+
+.hint-arrow-head {
+  fill: rgba(29, 100, 167, 0.92);
+}
+
+.hint-arrow-start {
+  fill: rgba(255, 255, 255, 0.86);
+  stroke: rgba(29, 100, 167, 0.92);
+  stroke-width: 0.055;
+  vector-effect: non-scaling-stroke;
 }
 
 .square.legal::before {
