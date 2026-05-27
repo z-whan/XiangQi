@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+npm-debug.log*
+
+# Local machine configuration. The engine path is user-specific.
+.local/
+
+# Runtime exports and local safety snapshots.
+exports/
+.snapshots/
+
+# Upstream dependencies are fetched with scripts/clone-deps.
+vendor/

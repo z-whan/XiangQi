@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+echo "Node: $(node -v)"
+echo "npm: $(npm -v)"
+node --check app/server.js
+node --check app/public/app.js
+npm test

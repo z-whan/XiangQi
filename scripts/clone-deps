@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p vendor
+
+if [ ! -d vendor/Pikafish/.git ]; then
+  git clone https://github.com/official-pikafish/Pikafish vendor/Pikafish
+else
+  echo "vendor/Pikafish already exists"
+fi
+
+if [ ! -d vendor/public-Xiangqi/.git ]; then
+  git clone https://github.com/sojourners/public-Xiangqi vendor/public-Xiangqi
+else
+  echo "vendor/public-Xiangqi already exists"
+fi

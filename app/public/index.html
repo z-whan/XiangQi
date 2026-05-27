@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>本地象棋 AI 分析助手</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+    <main class="app-shell">
+      <section class="board-zone">
+        <div class="topbar">
+          <div>
+            <h1>本地象棋 AI 分析助手</h1>
+            <div class="status-line">
+              <span id="modeBadge">自由走棋</span>
+              <button id="turnBtn" class="status-pill turn-toggle" type="button" title="自由/摆盘时点击切换当前先手">当前轮到：红方</button>
+              <span id="engineStatus">引擎：未启动</span>
+              <span id="autoStatus">自动模式：未启动</span>
+            </div>
+          </div>
+          <button id="settingsBtn" class="btn-secondary">设置</button>
+        </div>
+
+        <div class="controls">
+          <button id="startBtn" class="btn-primary">开始计算</button>
+          <button id="autoBtn" class="btn-auto">AI 自战</button>
+          <button id="stopAutoBtn" class="btn-danger-soft">停止自动模式</button>
+          <button id="pauseBtn" class="btn-warning">暂停</button>
+          <button id="stopBtn" class="btn-danger">停止计算</button>
+          <button id="undoBtn" class="btn-neutral">悔一步</button>
+          <button id="undoRoundBtn" class="btn-neutral">悔一轮</button>
+          <button id="resetBtn" class="btn-neutral">重新开始</button>
+          <button id="setupBtn" class="btn-secondary">自定义摆盘</button>
+          <button id="flipBoardBtn" class="btn-secondary">反转棋盘</button>
+          <button id="finishBtn" class="btn-danger">手动结束</button>
+          <button id="exportLogBtn" class="btn-secondary">导出日志</button>
+          <button id="exportMovesBtn" class="btn-secondary">导出棋谱</button>
+        </div>
+
+        <div class="board-wrap">
+          <div id="board" class="xiangqi-board" aria-label="中国象棋棋盘"></div>
+        </div>
+        <div id="setupTray" class="setup-tray" hidden></div>
+        <div class="fen-panel">
+          <div>当前 FEN</div>
+          <code id="fenText"></code>
+          <div id="exportStatus" class="export-status"></div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <section class="panel">
+          <h2>红方优势走向</h2>
+          <svg id="trendChart" class="trend-chart" viewBox="0 0 520 180" role="img"></svg>
+          <p class="note">根据引擎评分换算，仅供参考，不代表真实胜率。</p>
+        </section>
+
+        <section class="panel history-panel">
+          <h2>走法历史</h2>
+          <div id="moveHistory" class="move-history"></div>
+        </section>
+
+        <section class="panel">
+          <h2>当前 AI 计算结果</h2>
+          <div id="resultPanel" class="result-panel muted">尚未计算。可在自由模式短分析，或点击“开始计算”让 AI 接管当前方。</div>
+          <div class="explain-placeholder">解释器接口已预留：未来可根据最佳招法、评分变化和主要变化生成自然语言说明。</div>
+        </section>
+      </aside>
+    </main>
+
+    <section class="log-panel">
+      <h2>对局日志</h2>
+      <div id="logEntries" class="log-entries"></div>
+    </section>
+
+    <dialog id="settingsDialog">
+      <form method="dialog" class="settings-form">
+        <header>
+          <h2>设置</h2>
+          <button value="cancel">关闭</button>
+        </header>
+        <div id="settingsFeedback" class="settings-feedback"></div>
+
+        <section>
+          <h3>引擎设置</h3>
+          <label>Pikafish 可执行文件路径
+            <input id="enginePathInput" placeholder="/path/to/pikafish" />
+          </label>
+          <div class="settings-actions">
+            <button id="testEngineBtn" type="button">测试引擎</button>
+            <button id="restartEngineBtn" type="button">重启引擎</button>
+            <button id="saveSettingsBtn" type="button">保存设置</button>
+          </div>
+          <div id="engineInfo" class="engine-info">引擎状态：未启动</div>
+          <div id="engineOptions" class="engine-options"></div>
+        </section>
+
+        <section>
+          <h3>棋力 / 计算档位</h3>
+          <label>默认档位
+            <select id="presetSelect">
+              <option value="1">档位 1：入门陪练，约 0.1 秒</option>
+              <option value="2">档位 2：普通业余，约 0.3 秒</option>
+              <option value="3">档位 3：业余高手，约 0.8 秒</option>
+              <option value="4">档位 4：强业余 / 复盘分析，约 1.5 秒</option>
+              <option value="5">档位 5：深度分析，约 3 秒</option>
+              <option value="custom">自定义档位</option>
+            </select>
+          </label>
+          <div id="customSearchFields" class="grid-2">
+            <label>搜索方式
+              <select id="searchModeSelect">
+                <option value="movetime">按时间 movetime</option>
+                <option value="depth">按深度 depth</option>
+              </select>
+            </label>
+            <label>搜索深度 <input id="depthInput" type="number" min="1" value="7" /></label>
+            <label>每步计算时间 ms <input id="movetimeInput" type="number" min="10" value="800" /></label>
+            <label>MultiPV 候选数 <input id="multipvInput" type="number" min="1" max="8" value="3" /></label>
+            <label class="always-enabled-setting">AI 自战延迟秒数 <input id="autoDelayInput" type="number" min="0" max="30" value="2" /></label>
+          </div>
+          <p class="note">若同时填写 depth 与 movetime，实际采用“搜索方式”中选择的一个。</p>
+          <button id="saveDifficultyBtn" type="button" class="btn-primary">保存设置并生效</button>
+        </section>
+
+        <section>
+          <h3>局面评分设置</h3>
+          <label class="inline"><input id="autoAnalysisInput" type="checkbox" /> 用户走棋后自动短分析</label>
+          <div class="grid-2">
+            <label>评分耗时 ms <input id="analysisMovetimeInput" type="number" min="10" value="300" /></label>
+            <label>评分深度 <input id="analysisDepthInput" type="number" min="1" value="7" /></label>
+          </div>
+        </section>
+
+        <section>
+          <h3>UI 设置</h3>
+          <label class="inline"><input id="showCoordsInput" type="checkbox" /> 显示坐标</label>
+          <label class="inline"><input id="showLastMoveInput" type="checkbox" /> 显示最后一步高亮</label>
+          <label class="inline"><input id="showLegalTipsInput" type="checkbox" /> 显示可走位置提示</label>
+        </section>
+      </form>
+    </dialog>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

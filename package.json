@@ -1,0 +1,13 @@
+{
+  "name": "local-xiangqi-ai-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node app/server.js",
+    "start": "node app/server.js",
+    "test": "node --test app/tests/*.test.js",
+    "check": "node --check app/server.js && node --check app/public/app.js && npm test",
+    "build:pikafish": "scripts/build-pikafish"
+  }
+}
